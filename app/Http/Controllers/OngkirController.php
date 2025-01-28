@@ -86,4 +86,21 @@ class OngkirController extends Controller
         Ongkir::findOrFail($id)->delete();
         return $this->success(null, 'Data Berhasil Dihapus');
     }
+
+    public function dataOngkir(Request $request)
+    {
+        $q = $request->q;
+
+        $ongkirs = Ongkir::where(function ($f) use ($q) {
+            if ($q){
+                $f->where('kode_ongkir', 'LIKE', '%' . $q . '%');
+            }
+        })
+        ->orderBy('created_at','desc')
+        ->paginate(1000);
+
+        $data['records'] = OngkirResource::collection($ongkirs);
+        $data['paging'] = new PagingResource($ongkirs);
+        return $this->success($data, 'Data berhasil di ambil');
+    }
 }

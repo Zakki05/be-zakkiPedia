@@ -24,7 +24,6 @@ class PemesananDetailRequest extends FormRequest
         return [
             'pemesanan_id' => 'required',
             'produk_detail_id' => 'required',
-            'harga_produk' => 'required',
             'jumlah' => 'required',
         ];
     }

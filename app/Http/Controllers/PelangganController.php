@@ -101,4 +101,19 @@ class PelangganController extends Controller
         Pelanggan::findOrFail($id)->delete();
         return $this->success(null,'Data Berhasil Dihapus');
     }
+
+    public function dataPelanggan(Request $request)
+    {
+        $q = $request->q;
+
+        $pelanggans = Pelanggan::whereHas('user', function($f) use ($q) {
+            if ($q){
+                $f->where('email', 'LIKE', '%' . $q . '%');
+            }
+        })->orderBy('id', 'desc')->paginate(1000);
+
+        $data['records'] = PelangganResource::collection($pelanggans);
+        $data['paging'] = new PagingResource($pelanggans);
+        return $this->success($data,'Data Berhasil Diambil');
+    }
 }

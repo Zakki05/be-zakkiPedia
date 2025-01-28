@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\PembayaranResource;
 use App\Http\Resources\PagingResource;
 use App\Models\Pembayaran;
+use App\Models\Pemesanan;
 use Illuminate\Http\Request;
 
 class PembayaranController extends Controller
@@ -39,13 +40,19 @@ class PembayaranController extends Controller
      */
     public function store(Request $request)
     {
+        $pemesanan = Pemesanan::findOrFail($request->pemesanan_id);
+
         $pembayaran = new Pembayaran;
-        $pembayaran->pelanggan_id = $request->pelanggan_id;
-        $pembayaran->tanggal_pembayaran = $request->tanggal_pembayaran;
+        $pembayaran->pelanggan_id = $pemesanan->pelanggan_id;
+        $pembayaran->tanggal_pembayaran = now();
         $pembayaran->metode_pembayaran = $request->metode_pembayaran;
-        $pembayaran->pembayaran = $request->pembayaran;
+        $pembayaran->pembayaran = $pemesanan->total_pemesanan;
         $pembayaran->status = $request->status;
         $pembayaran->save();
+
+        $pemesanan->pembayaran_id = $pembayaran->id;
+        $pemesanan->save();
+
         $data['record'] = new PembayaranResource($pembayaran);
         return $this->success($data, 'Data Berhasil Disimpan');
     }

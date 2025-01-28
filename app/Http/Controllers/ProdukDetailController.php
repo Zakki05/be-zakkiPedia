@@ -14,21 +14,26 @@ class ProdukDetailController extends Controller
         $q = $request->q;
         $produk_id = $request->produk_id;
 
+        $produkDetailsQuery = ProdukDetail::with('produk:id,kode_produk');
+
+        if ($produk_id) {
+            $produkDetailsQuery->where('produk_id', $produk_id);
+        }
+
+        if ($q) {
+            $produkDetailsQuery->where('produk_id', 'LIKE', '%' . $q . '%');
+        }
+
         if (!$request->page) {
-            // Fetch all penjualanDetails filtered by penjualan_id
-            $produkDetails = ProdukDetail::where('produk_id', $produk_id)->get();
+            $produkDetails = $produkDetailsQuery->get();
             $data['records'] = ProdukDetailResource::collection($produkDetails);
             return $this->success($data, 'Data Berhasil Diambil');
         }
 
-        $produkDetails = ProdukDetail::with('produk:id,kode_produk')
-            ->where('produk_id', $produk_id)
-            ->when($q, function ($query) use ($q) {
-                $query->where('produk_id', 'LIKE', '%' . $q . '%');
-            })->paginate(5);
-
+        $produkDetails = $produkDetailsQuery->paginate(5);
         $data['records'] = ProdukDetailResource::collection($produkDetails);
         $data['paging'] = new PagingResource($produkDetails);
+
         return $this->success($data, 'Data Berhasil Diambil');
     }
 
@@ -60,9 +65,9 @@ class ProdukDetailController extends Controller
      */
     public function show(string $id)
     {
-        $produkdetail = ProdukDetail:: findOrFail($id);
+        $produkdetail = ProdukDetail::findOrFail($id);
         $data['record'] = new ProdukDetailResource($produkdetail);
-        return $this -> success($data,'Data Berhasil Ditampilkan');
+        return $this->success($data, 'Data Berhasil Ditampilkan');
     }
 
     /**
@@ -95,5 +100,33 @@ class ProdukDetailController extends Controller
     {
         ProdukDetail::findOrFail($id)->delete();
         return $this->success(null, 'Data Berhasil Dihapus');
+    }
+
+    public function dataProduk(Request $request)
+    {
+        $q = $request->q;
+        $produk_id = $request->produk_id;
+
+        $produkDetailsQuery = ProdukDetail::with('produk');
+
+        if ($produk_id) {
+            $produkDetailsQuery->where('produk_id', $produk_id);
+        }
+
+        if ($q) {
+            $produkDetailsQuery->where('produk_id', 'LIKE', '%' . $q . '%');
+        }
+
+        if (!$request->page) {
+            $produkDetails = $produkDetailsQuery->get();
+            $data['records'] = ProdukDetailResource::collection($produkDetails);
+            return $this->success($data, 'Data Berhasil Diambil');
+        }
+
+        $produkDetails = $produkDetailsQuery->paginate(5);
+        $data['records'] = ProdukDetailResource::collection($produkDetails);
+        $data['paging'] = new PagingResource($produkDetails);
+
+        return $this->success($data, 'Data Berhasil Diambil');
     }
 }

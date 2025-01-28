@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\PemesananDetailResource;
 use App\Http\Resources\PagingResource;
+use App\Models\Pemesanan;
 use App\Models\PemesananDetail;
+use App\Models\ProdukDetail;
 use Illuminate\Http\Request;
 
 class PemesananDetailController extends Controller
@@ -14,11 +16,17 @@ class PemesananDetailController extends Controller
         $q = $request->q;
         $pemesanan_id = $request->pemesanan_id;
 
-        $pemesananDetails = PemesananDetail::with('pemesanan:id,kode_pemesanan')
-            ->where('pemesanan_id', $pemesanan_id)
-            ->when($q, function ($query) use ($q) {
-                $query->where('pemesanan_id', 'LIKE', '%' . $q . '%');
-            })->paginate(5);
+        $pemesananDetailsQuery = PemesananDetail::with(['pemesanan', 'produkDetail']);
+
+        if ($pemesanan_id) {
+            $pemesananDetailsQuery->where('pemesanan_id', $pemesanan_id);
+        }
+
+        if ($q) {
+            $pemesananDetailsQuery->where('pemesanan_id', 'LIKE', '%' . $q . '%');
+        }
+
+        $pemesananDetails = $pemesananDetailsQuery->paginate(5);
 
         $data['records'] = PemesananDetailResource::collection($pemesananDetails);
         $data['paging'] = new PagingResource($pemesananDetails);
@@ -41,9 +49,20 @@ class PemesananDetailController extends Controller
         $pemesanandetail = new PemesananDetail;
         $pemesanandetail->pemesanan_id = $request->pemesanan_id;
         $pemesanandetail->produk_detail_id = $request->produk_detail_id;
-        $pemesanandetail->harga_produk = $request->harga_produk;
-        $pemesanandetail->jumlah = $request->total_harga;
+
+        $produkDetail = ProdukDetail::findOrFail($request->produk_detail_id);
+        $pemesanandetail->harga_produk = $produkDetail->harga;
+        $pemesanandetail->jumlah = $request->jumlah;
+        $pemesanandetail->total_harga = $pemesanandetail->jumlah * $pemesanandetail->harga_produk;
+
+        $produkDetail->decrement('stok', $pemesanandetail->jumlah);
         $pemesanandetail->save();
+
+        $pemesanan = Pemesanan::findOrFail($request->pemesanan_id);
+        $pemesanan->total_pemesanan += $pemesanandetail->total_harga;
+        $pemesanan->subtotal = $pemesanan->biaya + $pemesanan->total_pemesanan;
+        $pemesanan->save();
+
         $data['record'] = new PemesananDetailResource($pemesanandetail);
         return $this->success($data, 'Data Berhasil Disimpan');
     }
@@ -53,9 +72,9 @@ class PemesananDetailController extends Controller
      */
     public function show(string $id)
     {
-        $pemesanandetail = PemesananDetail:: findOrFail($id);
+        $pemesanandetail = PemesananDetail::findOrFail($id);
         $data['record'] = new PemesananDetailResource($pemesanandetail);
-        return $this -> success($data,'Data Berhasil Ditampilkan');
+        return $this->success($data, 'Data Berhasil Ditampilkan');
     }
 
     /**
@@ -86,7 +105,15 @@ class PemesananDetailController extends Controller
      */
     public function destroy(string $id)
     {
-        PemesananDetail::findOrFail($id)->delete();
+        $pemesanandetail = PemesananDetail::findOrFail($id);
+        $produkDetail = ProdukDetail::findOrFail($pemesanandetail->produk_detail_id);
+        $produkDetail->increment('stok', $pemesanandetail->jumlah);
+        $pemesanan = Pemesanan::findOrFail($pemesanandetail->pemesanan_id);
+        $pemesanan->total_pemesanan -= $pemesanandetail->total_harga;
+        $pemesanan->subtotal = $pemesanan->biaya + $pemesanan->total_pemesanan;
+        $pemesanan->save();
+        $pemesanandetail->delete();
+
         return $this->success(null, 'Data Berhasil Dihapus');
     }
 }

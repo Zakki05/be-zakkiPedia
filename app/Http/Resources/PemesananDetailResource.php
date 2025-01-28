@@ -17,10 +17,12 @@ class PemesananDetailResource extends JsonResource
         return [
             'id' =>$this->id,
             'pemesanan' =>$this->pemesanan,
-            'produk_detail' =>$this->produk_detail,
+            'produk_detail' =>$this->produkDetail,
             'harga_produk' =>$this->harga_produk,
             'jumlah' =>$this->jumlah,
             'total_harga' =>$this->total_harga,
+            'gambar' => $this->produkDetail->produk->gambar,
+            'nama_produk' => $this->produkDetail->produk->nama_produk,
         ];
     }
 }

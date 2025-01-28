@@ -23,6 +23,7 @@ class PemesananRequest extends FormRequest
     {
         return [
             'pelanggan_id' => 'required',
+            'pembayaran_id' => 'required',
             'ongkir_id' => 'required',
             'tanggal' => 'required',
             'kelurahan' => 'required',
