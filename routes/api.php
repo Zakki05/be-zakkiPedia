@@ -57,6 +57,8 @@ Route::middleware(['api'])->group(function () {
                 Route::get('/dataProduk', [ProdukDetailController::class, 'dataProduk']);
                 Route::match(['put', 'patch'],'/pembayaranAdmin/{pemesanan}', [PemesananController::class, 'pembayaranAdmin']);
                 Route::match(['put', 'patch'],'/simpanPesanan/{pemesanan}', [PemesananController::class, 'simpanPesanan']);
+                Route::post('/exportLaporanHarian', [PemesananController::class, 'exportLaporanHarian']);
+                Route::post('/exportLaporanBulanan', [PemesananController::class, 'exportLaporanBulanan']);
             });
 
             Route::middleware(['pelanggan'])->group(function(){

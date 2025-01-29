@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\LaporanBulananExport;
 use App\Http\Resources\PemesananResource;
 use App\Http\Resources\PagingResource;
 use App\Models\Ongkir;
 use App\Models\Pembayaran;
 use App\Models\Pemesanan;
 use Illuminate\Http\Request;
+use App\Exports\LaporanHarianExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PemesananController extends Controller
 {
@@ -167,5 +170,43 @@ class PemesananController extends Controller
         $data['records'] = PemesananResource::collection($pemesanans);
         $data['paging'] = new PagingResource($pemesanans);
         return $this->success($data, 'Data berhasil di ambil');
+    }
+
+    public function exportLaporanHarian(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        // Ambil parameter dari request
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // Lakukan export
+        return Excel::download(
+            new LaporanHarianExport($startDate, $endDate),
+            'laporan_pemesanan_' . $startDate . '_to_' . $endDate . '.xlsx'
+        );
+    }
+
+    public function exportLaporanBulanan(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2000|max:'.date('Y'),
+        ]);
+
+        // Ambil parameter dari request
+        $month = $request->input('month');
+        $year = $request->input('year');
+
+        // Lakukan export
+        return Excel::download(
+            new LaporanBulananExport($month, $year),
+            'laporan_bulanan_' . $year . '_' . $month . '.xlsx'
+        );
     }
 }
