@@ -48,6 +48,7 @@ Route::middleware(['api'])->group(function () {
 
             Route::middleware(['superAdmin'])->group(function(){
                 Route::post('/storePelanggan', [UserController::class, 'storePelanggan']);
+                Route::get('/getPemesananSuperAdmin', [PemesananController::class, 'getPemesananSuperAdmin']);
             });
 
             Route::middleware(['admin'])->group(function(){

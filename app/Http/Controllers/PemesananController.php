@@ -14,13 +14,17 @@ class PemesananController extends Controller
     public function index(Request $request)
     {
         $q = $request->q;
+        $status = $request->status;
 
-        $pemesanans = Pemesanan::where(function ($f) use ($q) {
-            if ($q){
+        $pemesanans = Pemesanan::where(function ($f) use ($q, $status) {
+            if ($q) {
                 $f->where('kode_pemesanan', 'LIKE', '%' . $q . '%');
             }
+            if ($status) {
+                $f->where('status', $status);
+            }
         })
-        ->orderBy('created_at','desc')
+        ->orderBy('created_at', 'desc')
         ->paginate(10);
 
         $data['records'] = PemesananResource::collection($pemesanans);
@@ -142,5 +146,26 @@ class PemesananController extends Controller
 
         $data['record'] = new PemesananResource($pemesanan);
         return $this->success($data, 'Data Berhasil Diubah');
+    }
+
+    public function getPemesananSuperAdmin(Request $request)
+    {
+        $q = $request->q;
+        $status = $request->status;
+
+        $pemesanans = Pemesanan::where(function ($f) use ($q, $status) {
+            if ($q) {
+                $f->where('kode_pemesanan', 'LIKE', '%' . $q . '%');
+            }
+            if ($status) {
+                $f->where('status', $status);
+            }
+        })
+        ->orderBy('created_at', 'desc')
+        ->paginate(10);
+
+        $data['records'] = PemesananResource::collection($pemesanans);
+        $data['paging'] = new PagingResource($pemesanans);
+        return $this->success($data, 'Data berhasil di ambil');
     }
 }
